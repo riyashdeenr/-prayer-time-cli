@@ -1,0 +1,12 @@
+[package]
+name = "prayer-time-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "mawaqit"
+path = "src/main.rs"
+
+[dependencies]
+salah = "0.7"
+chrono = "0.4"
