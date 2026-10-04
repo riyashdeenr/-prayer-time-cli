@@ -1,0 +1,13 @@
+[package]
+name = "mawaqit-worker"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+prayer-time-cli = { path = ".." }
+wasm-bindgen = "0.2"
+salah = "0.7"
+chrono = "0.4"
