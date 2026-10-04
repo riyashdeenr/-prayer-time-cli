@@ -1,25 +1,18 @@
-mod bayan;
-mod config;
-mod falak;
-mod miqat;
-mod munasabat;
-mod muwaqqit;
-mod taqwim;
-mod tawqit;
-mod theme;
-
 use std::collections::HashMap;
 use std::env;
 use chrono::{Duration, Local, Utc};
-use bayan::Bayan;
-use config::{ConfigManager, SavedConfig};
-use falak::{Falak, MoonGlyphStyle};
-use munasabat::{Munasabat, NightCalculationBasis};
-use muwaqqit::Muwaqqit;
+use prayer_time_cli::{
+    bayan::Bayan,
+    config::{ConfigManager, SavedConfig},
+    falak::{Falak, MoonGlyphStyle},
+    miqat,
+    munasabat::{self, Munasabat, NightCalculationBasis},
+    muwaqqit::Muwaqqit,
+    taqwim::{self, Taqwim},
+    tawqit::Tawqit,
+    theme::ThemeStyle,
+};
 use salah::prelude::{Coordinates, Prayer, PrayerSchedule};
-use taqwim::Taqwim;
-use tawqit::Tawqit;
-use theme::ThemeStyle;
 
 fn format_duration(total_secs: i64) -> String {
     let hours = total_secs / 3600;
