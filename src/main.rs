@@ -23,6 +23,7 @@ fn format_duration(total_secs: i64) -> String {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    let is_help = args.iter().any(|arg| arg == "--help" || arg == "-h");
     let is_verbose = args.iter().any(|arg| arg == "--verbose" || arg == "-v");
     let is_save = args.iter().any(|arg| arg == "--save");
     let is_night_breakdown = args.iter().any(|arg| arg == "--night");
@@ -30,6 +31,49 @@ fn main() {
     let is_fasting = args.iter().any(|arg| arg == "--fasting" || arg == "--suhoor" || arg == "--imsak");
     let is_prohibited = args.iter().any(|arg| arg == "--prohibited" || arg == "--duha" || arg == "--nahy");
     let is_annual = args.iter().any(|arg| arg == "--observances" || arg == "--annual" || arg == "--events");
+
+    if is_help {
+        println!("mawaqit (مواقيت) - Universal Terminal Prayer & Celestial Engine");
+        println!("Usage: mawaqit [OPTIONS]\n");
+        println!("GENERAL OPTIONS:");
+        println!("  -v, --verbose               Full multi-section schedule, astronomical & observances table");
+        println!("  -f, --format <STR>          Custom wttr.in-style format template (e.g. \"%next in %remaining\")");
+        println!("  --city, --location <NAME>   Select city by name (e.g. Singapore, London, Makkah, Tokyo)");
+        println!("  --lat <F64>, --lon <F64>    Custom geographic coordinates (e.g. --lat 1.35 --lon 103.82)");
+        println!("  --save                      Persist active flags and location to config.toml\n");
+        println!("CALCULATION & METHOD OPTIONS:");
+        println!("  --method <NAME>             Calculation method: singapore, mwl, ummalqura, isna, egyptian,");
+        println!("                              karachi, tehran, turkey, dubai, qatar, kuwait, moonsighting");
+        println!("  --madhab <shafi|hanafi>     Asr shadow ratio (default: shafi [1x], hanafi [2x])");
+        println!("  --fajr-angle <DEG>          Custom Fajr twilight depression angle");
+        println!("  --isha-angle <DEG>          Custom Isha twilight depression angle\n");
+        println!("OBSERVANCES & CELESTIAL OPTIONS:");
+        println!("  --night                     Detailed breakdown of night thirds, midnight & Tahajjud window");
+        println!("  --night-basis <sunset|isha> Juristic basis for night bounds (default: sunset [Maghrib to Fajr])");
+        println!("  --fasting, --suhoor         Dedicated Imsak, Suhoor cutoff, Iftar & fasting duration schedule");
+        println!("  --imsak-mins <N>            Precautionary Imsak buffer in minutes (default: 10)");
+        println!("  --compare-fasting <CITIES>  Compare fasting duration across global cities (e.g. London,Tokyo)");
+        println!("  --white-days                White Days (Ayyam al-Bid 13-15) and Month 1st verification");
+        println!("  --convert-hijri <SPEC>      Convert Hijri date to Gregorian (e.g. 13 or 1448-05-13)");
+        println!("  --prohibited, --duha        The 3 prohibited times (Awqat al-Nahy) and permissible Duha window");
+        println!("  --observances, --annual     Major canonical Islamic annual stations and sacred days\n");
+        println!("TAQWIM (HIJRI CALENDAR) ADJUSTMENTS:");
+        println!("  --taqwim-adjust <+/-N>      Apply offset to target month (e.g. +1 or -1) with audit logging");
+        println!("  --taqwim-month <YYYY-MM>    Target Hijri month key for adjustment (default: current month)");
+        println!("  --taqwim-offset <+/-N>      Global fallback Hijri day offset\n");
+        println!("UI & STYLING OPTIONS:");
+        println!("  --style, --theme <NAME>     Row style: dots (default), timeline, blocks, radio, minimal");
+        println!("  --moon <STYLE>              Moon glyph style: geometric (default), lunar, classic, text");
+        println!("  -h, --help                  Print this help guidance\n");
+        println!("TEMPLATE TOKENS (-f / --format):");
+        println!("  %location, %date, %current, %next, %next_time, %remaining, %remaining_hm");
+        println!("  %fajr (%f), %sunrise, %dhuhr (%d), %asr (%a), %maghrib (%m), %isha (%i)");
+        println!("  %moon, %moon_pct, %moon_name, %sun_alt, %sun_state, %sun_dir");
+        println!("  %hijri, %hijri_short, %hijri_day, %hijri_month, %hijri_year, %hijri_weekday, %hijri_offset");
+        println!("  %midnight, %last_third, %last_third_range, %white_days");
+        println!("  %imsak, %suhoor, %iftar, %fasting_duration, %duha, %duha_range, %zawal, %istijabah");
+        return;
+    }
 
     // Fasting comparison flag: --compare-fasting <city1,city2,...> or --compare <city1> <city2>
     let compare_fasting_arg = args.iter().position(|a| a == "--compare-fasting" || a == "--compare")
@@ -839,6 +883,8 @@ fn main() {
                     sun.azimuth,
                     sun.compass_direction
                 );
+
+                println!("\x1b[90mTip: Run mawaqit --help for all flags | Use -f for custom tmux templates\x1b[0m");
             } else {
                 // Mode C: Default single-line format
                 let current_display = if let Some(m) = mawaqit
