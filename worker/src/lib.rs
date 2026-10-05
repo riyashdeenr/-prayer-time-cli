@@ -35,8 +35,9 @@ pub unsafe extern "C" fn process_edge_request(
     cf_lat: c_double,
     cf_lon: c_double,
     cf_tz_offset_hours: c_int,
-    utc_timestamp_sec: c_double,
+    utc_timestamp_sec: i64,
 ) -> *mut c_char {
+
     let pathname = if pathname_ptr.is_null() { "" } else { CStr::from_ptr(pathname_ptr).to_str().unwrap_or("") };
     let search_params = if search_params_ptr.is_null() { "" } else { CStr::from_ptr(search_params_ptr).to_str().unwrap_or("") };
     let user_agent = if user_agent_ptr.is_null() { "" } else { CStr::from_ptr(user_agent_ptr).to_str().unwrap_or("") };
@@ -138,10 +139,11 @@ pub unsafe extern "C" fn process_edge_request(
         is_terminal,
     };
 
-    let raw_output = render_edge_response(&params, utc_timestamp_sec as i64);
+    let raw_output = render_edge_response(&params, utc_timestamp_sec);
     let formatted = format_client_output(&raw_output, is_terminal, &format!("mawaqit - {}", location_name));
     CString::new(formatted).unwrap_or_default().into_raw()
 }
+
 
 fn is_terminal_client(user_agent: &str) -> bool {
     let ua = user_agent.to_lowercase();

@@ -70,7 +70,7 @@ export default {
         tzOffsetHours = 8;
       }
 
-      const nowSec = Date.now() / 1000.0;
+      const nowSec = BigInt(Math.floor(Date.now() / 1000));
 
       const pathPtr = passStringToWasm(wasm, url.pathname);
       const searchPtr = passStringToWasm(wasm, url.search);
@@ -88,6 +88,8 @@ export default {
         tzOffsetHours,
         nowSec
       );
+
+
 
       const body = getStringFromWasm(wasm, resPtr);
 
