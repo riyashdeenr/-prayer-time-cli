@@ -71,9 +71,15 @@ pub unsafe extern "C" fn process_edge_request(
         "white-days" | "bid" => (EdgeSubroute::WhiteDays, None),
         "prohibited" | "duha" => (EdgeSubroute::Prohibited, None),
         "observances" | "annual" | "events" => (EdgeSubroute::Observances, None),
+        "convert" | "convert-hijri" => (EdgeSubroute::ConvertHijri(None), None),
+        path if path.starts_with("convert/") || path.starts_with("convert-hijri/") => {
+            let spec = path.splitn(2, '/').nth(1).map(|s| s.to_string());
+            (EdgeSubroute::ConvertHijri(spec), None)
+        }
         path if !path.is_empty() => (EdgeSubroute::DefaultTable, Some(path)),
         _ => (EdgeSubroute::DefaultTable, None),
     };
+
 
     let (location_name, latitude, longitude, tz_offset) = if let Some(loc_arg) = target_location {
         if loc_arg.contains(',') {
@@ -177,60 +183,7 @@ fn parse_query_string(qs: &str) -> std::collections::HashMap<String, String> {
     map
 }
 
-fn format_client_output(body: &str, is_terminal: bool, title: &str) -> String {
-    if is_terminal {
-        body.to_string()
-    } else {
-        format!(
-            r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{}</title>
-    <style>
-        body {{
-            background-color: #0d1117;
-            color: #c9d1d9;
-            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1.5rem;
-            box-sizing: border-box;
-        }}
-        pre {{
-            background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 1.5rem 2rem;
-            line-height: 1.5;
-            font-size: 0.95rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 100%;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }}
-        .tip {{
-            color: #8b949e;
-            margin-top: 1rem;
-            font-size: 0.85rem;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div>
-        <pre>{}</pre>
-        <div class="tip">Designed for curl: <code>curl mawaqit.rahmanr.com</code></div>
-    </div>
-</body>
-</html>"#,
-            title,
-            body.replace('<', "&lt;").replace('>', "&gt;")
-        )
-    }
+fn format_client_output(body: &str, _is_terminal: bool, _title: &str) -> String {
+    body.to_string()
 }
+

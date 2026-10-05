@@ -25,7 +25,7 @@ pub struct EdgeRenderParams {
     pub is_terminal: bool, // true if curl/httpie/wget, false if browser
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EdgeSubroute {
     DefaultTable,
     Help,
@@ -34,7 +34,9 @@ pub enum EdgeSubroute {
     WhiteDays,
     Prohibited,
     Observances,
+    ConvertHijri(Option<String>),
 }
+
 
 fn format_duration(total_secs: i64) -> String {
     let hours = total_secs / 3600;
@@ -280,8 +282,47 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
             out.push_str("------------------------------------------------------------\n");
             return out;
         }
+        EdgeSubroute::ConvertHijri(ref spec_opt) => {
+            let (target_year, target_month, target_day) = match spec_opt {
+                Some(s) if s.contains('-') => {
+                    let parts: Vec<&str> = s.split('-').collect();
+                    let y = parts.get(0).and_then(|p| p.parse::<i32>().ok()).unwrap_or(taqwim_date.year);
+                    let m = parts.get(1).and_then(|p| p.parse::<u32>().ok()).unwrap_or(taqwim_date.month);
+                    let d = parts.get(2).and_then(|p| p.parse::<u32>().ok()).unwrap_or(1);
+                    (y, m, d)
+                }
+                Some(s) => {
+                    let d = s.parse::<u32>().unwrap_or(1);
+                    (taqwim_date.year, taqwim_date.month, d)
+                }
+                None => (taqwim_date.year, taqwim_date.month, 1),
+            };
+
+            let (greg_date, greg_weekday, applied_offset) = Taqwim::convert_hijri_to_gregorian(
+                target_year,
+                target_month,
+                target_day,
+                now_local.date_naive(),
+                0,
+                &adjustments,
+            );
+
+            let month_names = crate::taqwim::TaqwimDate::month_names();
+            let m_idx = (target_month.saturating_sub(1) as usize).min(11);
+            let m_name = month_names[m_idx];
+
+            out.push_str("============================================================\n");
+            out.push_str("  taqwim - Hijri to Gregorian Converter\n");
+            out.push_str("============================================================\n");
+            out.push_str(&format!("Hijri Date:        {} {} {} AH\n", target_day, m_name, target_year));
+            out.push_str(&format!("Gregorian Date:    {} ({})\n", greg_date.format("%A, %d %B %Y"), greg_weekday));
+            out.push_str(&format!("Applied Offset:    {:+ } day(s) (Month: {:04}-{:02})\n", applied_offset, target_year, target_month));
+            out.push_str("------------------------------------------------------------\n");
+            return out;
+        }
         _ => {}
     }
+
 
     // 3. Default Formatted Table (wttr.in style full table)
     let countdown_str = format_duration(mawaqit.time_until_next.num_seconds());
