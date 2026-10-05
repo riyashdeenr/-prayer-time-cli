@@ -27,14 +27,19 @@
   - [x] Prevent token collision with layered precedence replacement
   - [x] Verified binary execution in Windows PowerShell (< 30ms cold-start)
 
-- [ ] **Phase 4: Live Interactive Terminal UI (`shasha`)**
+- [x] **Phase 4: Web-Enabled Edge Microservice (`shabaka` / `wttr.in`-style)**
+  - [x] Decouple core calculation library from filesystem/OS dependencies
+  - [x] Compile pure WebAssembly module for Cloudflare Workers edge deployment
+  - [x] Implement Cloudflare edge header geolocation resolution (`cf-iplatitude`, `cf-iplongitude`, `cf-ipcity`, `cf-timezone`)
+  - [x] Implement routing: city endpoints (`/London`), coordinate endpoints (`/1.35,103.82`), special subroutes (`/fasting`, `/night`, `/white-days`, `/prohibited`, `/observances`)
+  - [x] Client negotiation: terminal clients (`curl`, `wget`, `httpie`, `powershell`, `invoke-restmethod`) receive pure UTF-8 plain text; browsers receive HTML
+  - [x] Support status-bar and tmux format strings (`?format=...`)
+  - [x] Deployed and verified live at `https://mawaqit.rahmanr.com`
+  - [ ] Complete browser HTML/CSS rendering overhaul (See [EDGE_MICROSERVICE.md](EDGE_MICROSERVICE.md))
+
+- [ ] **Phase 5: Live Interactive Terminal UI (`shasha`)**
   - [ ] Integrate `ratatui` and `crossterm`
   - [ ] Design terminal layout: Header, Prayer Schedule Grid, Celestial Widget (Moon + Sun), Progress Bar
   - [ ] Implement 1-second tick loop with dynamic progress bar showing time elapsed/remaining
   - [ ] Hotkeys: `q` to quit, `m` to toggle format, `r` to refresh
 
-- [ ] **Phase 5: Web-Enabled Microservice (`shabaka`)**
-  - [ ] Integrate `axum` + `tokio`
-  - [ ] Implement User-Agent negotiation: terminal clients (`curl`, `Invoke-RestMethod`) receive ANSI text; browsers receive clean page
-  - [ ] Add IP-based geolocation fallback for `curl pray.in`
-  - [ ] In-memory caching for zero-latency response
