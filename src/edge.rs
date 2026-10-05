@@ -52,8 +52,10 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
     let utc_dt = DateTime::<Utc>::from_timestamp(utc_timestamp, 0)
         .unwrap_or_else(|| DateTime::<Utc>::from_timestamp(0, 0).unwrap());
 
-    // Construct local time representation using Local timezone
-    let now_local = Local::now();
+    // In WebAssembly, Local::now() returns epoch 0. Use the edge request's UTC timestamp + timezone offset
+    let local_naive = utc_dt.naive_utc() + Duration::hours(params.timezone_offset_hours as i64);
+    let now_local: DateTime<Local> = DateTime::from_naive_utc_and_offset(local_naive, *Local::now().offset());
+
 
     let tawqit = Tawqit {
         location_name: params.location_name.clone(),
