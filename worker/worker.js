@@ -99,10 +99,11 @@ export default {
       if (uaPtr) wasm.mawaqit_free(uaPtr, userAgent.length + 1);
       if (cityPtr) wasm.mawaqit_free(cityPtr, city.length + 1);
 
-      const isTerminal = /curl|httpie|wget|fetch|aria2/i.test(userAgent);
+      const isTerminal = /curl|httpie|wget|fetch|aria2|powershell|invoke-webrequest|invoke-restmethod|irm|iwr/i.test(userAgent);
       const contentType = isTerminal
         ? 'text/plain; charset=utf-8'
         : 'text/html; charset=utf-8';
+
 
       return new Response(body, {
         status: 200,

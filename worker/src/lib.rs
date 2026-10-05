@@ -152,7 +152,13 @@ fn is_terminal_client(user_agent: &str) -> bool {
         || ua.contains("wget")
         || ua.contains("fetch")
         || ua.contains("aria2")
+        || ua.contains("powershell")
+        || ua.contains("invoke-webrequest")
+        || ua.contains("invoke-restmethod")
+        || ua.contains("irm")
+        || ua.contains("iwr")
 }
+
 
 fn parse_query_string(qs: &str) -> std::collections::HashMap<String, String> {
     let mut map = std::collections::HashMap::new();
