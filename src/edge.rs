@@ -285,12 +285,15 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
         if now_local >= today_maghrib { "Eve of next day" } else { "Day" }
     ));
 
+    let tz_shift = Duration::hours(params.timezone_offset_hours as i64);
+
     let total_items = mawaqit.schedule.len();
     for (idx, miqat) in mawaqit.schedule.iter().enumerate() {
         let is_last = idx + 1 == total_items;
+        let shifted_time = miqat.time + tz_shift;
         let line = style.format_row(
             miqat.name,
-            &miqat.time.format("%H:%M").to_string(),
+            &shifted_time.format("%H:%M").to_string(),
             miqat.status,
             is_last,
         );
@@ -298,35 +301,38 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
         out.push('\n');
     }
 
+
+    let shifted_next_time = mawaqit.next_prayer_time + tz_shift;
     out.push_str(&format!(
         "\nNext: {} at {} (-{})\n\n",
         mawaqit.next_prayer_name,
-        mawaqit.next_prayer_time.format("%H:%M"),
+        shifted_next_time.format("%H:%M"),
         countdown_str
     ));
 
     out.push_str("Observances (Munasabat):\n");
-    out.push_str(&format!("  Midnight (Nisf):     {}\n", night.midnight.format("%H:%M")));
+    out.push_str(&format!("  Midnight (Nisf):     {}\n", (night.midnight + tz_shift).format("%H:%M")));
     out.push_str(&format!(
         "  Last Third of Night: {} - {}{}\n",
-        night.last_third.start.format("%H:%M"),
-        night.last_third.end.format("%H:%M"),
+        (night.last_third.start + tz_shift).format("%H:%M"),
+        (night.last_third.end + tz_shift).format("%H:%M"),
         if night.is_currently_last_third { " (ACTIVE NOW)" } else { "" }
     ));
     out.push_str(&format!(
         "  Fasting & Suhoor:    {:02}h {:02}m (Imsak: {}, Fajr: {}, Iftar: {})\n",
         fasting.fasting_duration.num_minutes() / 60,
         fasting.fasting_duration.num_minutes() % 60,
-        fasting.imsak_time.format("%H:%M"),
-        fasting.suhoor_cutoff.format("%H:%M"),
-        fasting.iftar_time.format("%H:%M")
+        (fasting.imsak_time + tz_shift).format("%H:%M"),
+        (fasting.suhoor_cutoff + tz_shift).format("%H:%M"),
+        (fasting.iftar_time + tz_shift).format("%H:%M")
     ));
     out.push_str(&format!(
         "  Duha Window:         {} - {}{}\n",
-        prohibited.duha_start.format("%H:%M"),
-        prohibited.duha_end.format("%H:%M"),
+        (prohibited.duha_start + tz_shift).format("%H:%M"),
+        (prohibited.duha_end + tz_shift).format("%H:%M"),
         if prohibited.is_currently_duha { " (ACTIVE NOW)" } else { "" }
     ));
+
 
     out.push_str("\nCelestial & Calendar:\n");
     out.push_str(&format!("  Calendar: {}\n", taqwim_date.format()));
