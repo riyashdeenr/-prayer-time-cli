@@ -109,9 +109,11 @@ impl Bayan {
         output = output.replace("%hijri", &hijri_full);
         output = output.replace("%taqwim", &hijri_full);
 
+        output = output.replace("%moon_symbol", moon_symbol);
         output = output.replace("%moon_name", moon.phase_name);
         output = output.replace("%moon_pct", &moon_pct);
         output = output.replace("%moon", moon_symbol);
+
 
         output = output.replace("%sun_state", sun.state_name);
         output = output.replace("%sun_dir", sun.compass_direction);

@@ -200,6 +200,8 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
     }
 
     // 2. Specific Subroutes
+    let tz_shift = Duration::hours(params.timezone_offset_hours as i64);
+
     match params.subroute {
         EdgeSubroute::Fasting => {
             let f_dur_m = fasting.fasting_duration.num_minutes();
@@ -208,9 +210,9 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
             out.push_str("============================================================\n");
             out.push_str(&format!("Location:           {} ({:.2}°, {:.2}°)\n", mawaqit.location_name, params.latitude, params.longitude));
             out.push_str(&format!("Date:               {} ({} / {})\n", mawaqit.date, taqwim_date.format(), taqwim_date.weekday_name));
-            out.push_str(&format!("Precautionary Imsak: {} (-10 mins buffer)\n", fasting.imsak_time.format("%H:%M")));
-            out.push_str(&format!("Suhoor Cutoff (Fajr):{}\n", fasting.suhoor_cutoff.format("%H:%M")));
-            out.push_str(&format!("Iftar Time (Maghrib):{}\n\n", fasting.iftar_time.format("%H:%M")));
+            out.push_str(&format!("Precautionary Imsak: {} (-10 mins buffer)\n", (fasting.imsak_time + tz_shift).format("%H:%M")));
+            out.push_str(&format!("Suhoor Cutoff (Fajr):{}\n", (fasting.suhoor_cutoff + tz_shift).format("%H:%M")));
+            out.push_str(&format!("Iftar Time (Maghrib):{}\n\n", (fasting.iftar_time + tz_shift).format("%H:%M")));
             out.push_str(&format!("Total Fasting Span: {:02}h {:02}m\n", f_dur_m / 60, f_dur_m % 60));
             out.push_str("------------------------------------------------------------\n");
             return out;
@@ -220,11 +222,12 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
             out.push_str("  munasabat - Night Division & Tahajjud Timing\n");
             out.push_str("============================================================\n");
             out.push_str(&format!("Location:           {} | Date: {}\n", mawaqit.location_name, mawaqit.date));
-            out.push_str(&format!("Midnight (Nisf):    {}\n", night.midnight.format("%H:%M")));
-            out.push_str(&format!("Last Third (Tahajjud): {} - {}\n", night.last_third.start.format("%H:%M"), night.last_third.end.format("%H:%M")));
+            out.push_str(&format!("Midnight (Nisf):    {}\n", (night.midnight + tz_shift).format("%H:%M")));
+            out.push_str(&format!("Last Third (Tahajjud): {} - {}\n", (night.last_third.start + tz_shift).format("%H:%M"), (night.last_third.end + tz_shift).format("%H:%M")));
             out.push_str("------------------------------------------------------------\n");
             return out;
         }
+
         EdgeSubroute::WhiteDays => {
             out.push_str("============================================================\n");
             out.push_str("  munasabat - White Days (Ayyam al-Bid 13-15)\n");
@@ -240,8 +243,9 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
             out.push_str("============================================================\n");
             out.push_str("  munasabat - Prohibited Prayer Times & Duha Window\n");
             out.push_str("============================================================\n");
-            out.push_str(&format!("Duha Window:        {} - {}\n", prohibited.duha_start.format("%H:%M"), prohibited.duha_end.format("%H:%M")));
+            out.push_str(&format!("Duha Window:        {} - {}\n", (prohibited.duha_start + tz_shift).format("%H:%M"), (prohibited.duha_end + tz_shift).format("%H:%M")));
             if let Some(reason) = prohibited.prohibited_reason {
+
                 out.push_str(&format!("⚠️ CURRENT STATUS: IN PROHIBITED WINDOW ({})\n", reason));
             } else if prohibited.is_currently_duha {
                 out.push_str("✨ CURRENT STATUS: Duha Window Active (Salat al-Duha permissible)\n");
