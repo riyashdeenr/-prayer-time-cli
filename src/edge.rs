@@ -52,9 +52,13 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
     let utc_dt = DateTime::<Utc>::from_timestamp(utc_timestamp, 0)
         .unwrap_or_else(|| DateTime::<Utc>::from_timestamp(0, 0).unwrap());
 
-    // In WebAssembly, Local::now() returns epoch 0. Use the edge request's UTC timestamp + timezone offset
+    // In WebAssembly, Local has +00:00 offset (UTC).
+    // salah::PrayerSchedule calculates times in UTC.
+    // Therefore, muwaqqit.calculate must compare against UTC time (utc_dt) to correctly identify current/next prayer!
+    let now_for_calculation: DateTime<Local> = DateTime::from_naive_utc_and_offset(utc_dt.naive_utc(), *Local::now().offset());
     let local_naive = utc_dt.naive_utc() + Duration::hours(params.timezone_offset_hours as i64);
     let now_local: DateTime<Local> = DateTime::from_naive_utc_and_offset(local_naive, *Local::now().offset());
+
 
 
     let tawqit = Tawqit {
@@ -67,10 +71,14 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
     };
 
     let muwaqqit = Muwaqqit::new(tawqit.clone());
-    let mawaqit = match muwaqqit.calculate(now_local) {
-        Ok(m) => m,
+    let mawaqit = match muwaqqit.calculate(now_for_calculation) {
+        Ok(mut m) => {
+            m.date = local_naive.date();
+            m
+        },
         Err(e) => return format!("Error calculating prayer times: {}\n", e),
     };
+
 
     let today_maghrib = mawaqit
         .schedule
