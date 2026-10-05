@@ -161,6 +161,88 @@ mawaqit --taqwim-adjust -1 --taqwim-month 1448-05         # Adjust specific mont
 ```
 Automatically appends an audit entry to `taqwim_adjustments.log` and updates `config.toml`.
 
+### 12. Calculation Method Selection (`--method`)
+Select from canonical global calculation bodies and regional authorities:
+```bash
+mawaqit --method mwl         # Muslim World League (Fajr 18°, Isha 17°)
+mawaqit --method singapore   # MUIS Singapore (Fajr 20°, Isha 18°)
+mawaqit --method egyptian    # Egyptian General Authority of Survey (Fajr 19.5°, Isha 17.5°)
+mawaqit --method isna        # Islamic Society of North America (Fajr 15°, Isha 15°)
+mawaqit --method ummalqura   # Umm al-Qura, Makkah (Fajr 18.5°, Isha +90 min interval)
+mawaqit --method karachi     # Univ. of Islamic Sciences, Karachi (Fajr 18°, Isha 18°)
+mawaqit --method turkey      # Diyanet İşleri Başkanlığı, Turkey
+mawaqit --method dubai       # Dubai / UAE Awqaf
+```
+
+### 13. Juristic Asr School / Madhab (`--madhab`)
+Toggle the shadow multiplier used for calculating Asr prayer entrance:
+```bash
+mawaqit --madhab shafi       # Standard/Majority: Shadow length equals object height (1x shadow factor, default)
+mawaqit --madhab hanafi      # Hanafi: Shadow length equals twice object height (2x shadow factor)
+```
+
+### 14. Custom Astronomical Twilight Angles (`--fajr-angle` & `--isha-angle`)
+For high-latitude or custom observational guidelines, override exact solar depression angles:
+```bash
+mawaqit --fajr-angle 19.5 --isha-angle 17.5
+```
+
+> [!TIP]
+> For a full list of all available CLI flags, subroutes, and customisation parameters, refer to the [CLI Flags & Options Table](#cli-flags--options-table) below.
+
+---
+
+## Configuration & Local Persistent Storage (`--save`)
+
+When you use `mawaqit` on your local machine, you can persist your preferred location, calculation method, madhab, and UI style permanently to disk using `--save`:
+
+```bash
+# Save your hometown parameters once to your local machine
+mawaqit --city London --method mwl --madhab hanafi --save
+```
+
+Subsequent runs of `mawaqit` anywhere in your terminal will automatically load your saved configuration without needing to pass flags again.
+
+> [!NOTE]
+> **Why does `--save` only work in the local CLI?**  
+> The web emulator at `mawaqit.rahmanr.com` runs on stateless Cloudflare Workers WebAssembly at the edge with zero disk storage access. Writing persistent user files to `config.toml` is exclusive to the local CLI binary on your machine where it safely manages your local user environment.
+
+Configuration is persisted across runs in standard TOML format:
+* **Linux / macOS**: `~/.config/mawaqit/config.toml`
+* **Windows**: `%APPDATA%\mawaqit\config.toml`
+
+### Example `config.toml`:
+```toml
+# mawaqit persistent user configuration
+
+[location]
+location = "London"
+latitude = 51.5074
+longitude = -0.1278
+
+[calculation]
+method = "mwl"
+madhab = "hanafi"
+night_basis = "sunset"
+imsak_buffer = 10
+
+[ui]
+style = "dots"
+moon = "geometric"
+
+[taqwim]
+default_offset = 0
+
+[taqwim.adjustments]
+"1448-03" = +1
+"1448-04" = 0
+```
+
+Each adjustment is logged with an audit trail in `taqwim_adjustments.log`:
+```text
+2026-10-04 14:10:00 | Month: 1448-03 | Offset: +1 | Reason: User CLI adjustment
+```
+
 ---
 
 ## CLI Flags & Options Table
@@ -235,46 +317,6 @@ Automatically appends an audit entry to `taqwim_adjustments.log` and updates `co
 | **`%duha_range`** | Full permissible Duha window | `07:07-12:46` |
 | **`%zawal`** | Midday zenith prohibited start | `12:46` |
 | **`%istijabah`** | Friday Hour of Response window | `17:57-18:57` |
-
----
-
-## Configuration & Audit Ledger
-
-Configuration is persisted across runs in standard TOML format:
-* **Linux / macOS**: `~/.config/mawaqit/config.toml`
-* **Windows**: `%APPDATA%\mawaqit\config.toml`
-
-### Example `config.toml`:
-```toml
-# mawaqit persistent user configuration
-
-[location]
-location = "Singapore"
-latitude = 1.3521
-longitude = 103.8198
-
-[calculation]
-method = "singapore"
-madhab = "shafi"
-night_basis = "sunset"
-imsak_buffer = 10
-
-[ui]
-style = "dots"
-moon = "geometric"
-
-[taqwim]
-default_offset = 0
-
-[taqwim.adjustments]
-"1448-03" = +1
-"1448-04" = 0
-```
-
-Each adjustment is logged with an audit trail in `taqwim_adjustments.log`:
-```text
-2026-10-04 14:10:00 | Month: 1448-03 | Offset: +1 | Reason: User CLI adjustment
-```
 
 ---
 
