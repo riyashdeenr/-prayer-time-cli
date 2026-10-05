@@ -1,8 +1,12 @@
 import wasmModule from './mawaqit_worker.wasm';
 
+let wasmInstance = null;
+
 const wbindgenPlaceholder = new Proxy({}, {
   get: () => () => 0
 });
+
+
 
 async function getWasm() {
   if (!wasmInstance) {
