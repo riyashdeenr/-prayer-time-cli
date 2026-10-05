@@ -108,12 +108,12 @@ export default {
       if (pathPtr) wasm.mawaqit_free(pathPtr, url.pathname.length + 1);
       if (searchPtr) wasm.mawaqit_free(searchPtr, url.search.length + 1);
       if (uaPtr) wasm.mawaqit_free(uaPtr, userAgent.length + 1);
-      if (cityPtr) wasm.mawaqit_free(cityPtr, city.length + 1);
-
-      const isTerminal = /curl|httpie|wget|fetch|aria2|powershell|invoke-webrequest|invoke-restmethod|irm|iwr/i.test(userAgent);
+      const isRawQuery = url.searchParams.get('raw') === 'true' || request.headers.get('x-terminal') === 'true';
+      const isTerminal = isRawQuery || /curl|httpie|wget|fetch|aria2|powershell|invoke-webrequest|invoke-restmethod|irm|iwr/i.test(userAgent);
       
-      // If requested via terminal, return raw text/plain
+      // If requested via terminal or internal fetch, return raw text/plain
       if (isTerminal) {
+
         return new Response(body, {
           status: 200,
           headers: {
@@ -357,23 +357,32 @@ export default {
             // Build request URL for Wasm edge
             let requestUrl = '/';
             if (clean === 'help') {
-                requestUrl = '/:help';
+                requestUrl = '/:help?raw=true';
             } else if (clean.startsWith('format ')) {
                 const fmt = clean.substring(7);
-                requestUrl = '/?format=' + encodeURIComponent(fmt);
+                requestUrl = '/?format=' + encodeURIComponent(fmt) + '&raw=true';
             } else if (clean.startsWith('method ') || clean.startsWith('madhab ')) {
                 const parts = clean.split(' ');
-                requestUrl = '/?' + parts[0] + '=' + parts[1];
+                requestUrl = '/?' + parts[0] + '=' + parts[1] + '&raw=true';
+            } else if (clean.startsWith('convert')) {
+                const parts = clean.split(' ');
+                if (parts.length > 1) {
+                    requestUrl = '/convert/' + parts[1] + '?raw=true';
+                } else {
+                    requestUrl = '/convert?raw=true';
+                }
             } else {
-                requestUrl = '/' + clean;
+                const separator = clean.includes('?') ? '&' : '?';
+                requestUrl = '/' + clean + separator + 'raw=true';
             }
 
             try {
-                // Fetch directly from edge with curl user-agent to get pure text
+                // Fetch directly from edge asking for raw text output
                 const resp = await fetch(requestUrl, {
-                    headers: { 'User-Agent': 'curl/8.0' }
+                    headers: { 'x-terminal': 'true' }
                 });
                 const text = await resp.text();
+
 
                 const resultBlock = document.createElement('pre');
                 resultBlock.className = 'leading-relaxed whitespace-pre';
