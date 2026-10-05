@@ -1,6 +1,6 @@
 # mawaqit (مواقيت) - Terminal Prayer & Celestial Engine
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Edge: Cloudflare Workers](https://img.shields.io/badge/Edge-Cloudflare_Workers_Wasm-F38020?logo=cloudflare)](https://mawaqit.rahmanr.com)
 [![Rust: 2024 Edition](https://img.shields.io/badge/Rust-2024_Edition-black?logo=rust)](https://www.rust-lang.org)
 
