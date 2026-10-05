@@ -1,14 +1,21 @@
 import wasmModule from './mawaqit_worker.wasm';
 
-let wasmInstance = null;
+const wbindgenPlaceholder = new Proxy({}, {
+  get: () => () => 0
+});
 
 async function getWasm() {
   if (!wasmInstance) {
-    const instance = await WebAssembly.instantiate(wasmModule, {});
+    const importObject = {
+      __wbindgen_placeholder__: wbindgenPlaceholder,
+      env: {}
+    };
+    const instance = await WebAssembly.instantiate(wasmModule, importObject);
     wasmInstance = instance.exports || instance;
   }
   return wasmInstance;
 }
+
 
 function passStringToWasm(wasm, str) {
   if (!str) return 0;
