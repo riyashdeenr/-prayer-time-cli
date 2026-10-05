@@ -1,6 +1,51 @@
 # mawaqit (مواقيت) - Terminal Prayer & Celestial Engine
 
-An offline, zero-network-latency CLI tool written in pure Rust providing prayer schedules, Jean Meeus astronomical celestial tracking (Moon/Sun), custom `wttr.in`-style format templating, month-indexed Hijri adjustments (`taqwim`), and Islamic calendar observances (`munasabat`).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Edge: Cloudflare Workers](https://img.shields.io/badge/Edge-Cloudflare_Workers_Wasm-F38020?logo=cloudflare)](https://mawaqit.rahmanr.com)
+[![Rust: 2024 Edition](https://img.shields.io/badge/Rust-2024_Edition-black?logo=rust)](https://www.rust-lang.org)
+
+An offline, zero-network-latency CLI tool and pure WebAssembly edge microservice written in Rust. Provides high-precision prayer schedules, Jean Meeus astronomical celestial tracking (Moon/Sun), custom `wttr.in`-style format templating, month-indexed Hijri calendar adjustments (`taqwim`), and Islamic calendar observances (`munasabat`).
+
+Available both as a **standalone local CLI binary** (`mawaqit`) and an **interactive Web TUI / curl service** at **[mawaqit.rahmanr.com](https://mawaqit.rahmanr.com/)**.
+
+---
+
+## Live Interactive Web TUI & `curl` Service
+
+`mawaqit` runs as a high-performance WebAssembly microservice distributed across Cloudflare's global edge network at **[mawaqit.rahmanr.com](https://mawaqit.rahmanr.com/)**.
+
+### 1. In Your Browser: Interactive Web TUI Simulator
+When visited in any modern browser, `mawaqit.rahmanr.com` presents an interactive terminal emulator modeled with an ultra-clean Pitch Black / Zinc aesthetic:
+* **Interactive Command Prompt**: Type commands directly (`help`, `fasting`, `night`, `makkah`, `white-days`, `clear`).
+* **One-Click Quick Pills**: Rapidly execute common queries (`[fasting]`, `[night]`, `[white-days]`, `[duha]`, `[convert-hijri]`, `[madhab: hanafi]`, `[method: muis]`, `[method: egyptian]`).
+* **Live Copy `curl` Button**: Header automatically generates and syncs the exact `curl` command corresponding to your active browser view.
+* **Shell Features**: Full command history (`Up`/`Down` arrows) and Tab auto-completion.
+
+### 2. In Your Terminal: Zero-Install Instant `curl`
+No Rust installation required—fetch instant calculations directly from your terminal:
+
+```bash
+# Default one-liner for your current geolocation (detected via CF IP-geocoding)
+curl -s https://mawaqit.rahmanr.com
+
+# Dedicated fasting, suhoor & imsak schedule
+curl -s https://mawaqit.rahmanr.com/fasting
+
+# Night divisions & Tahajjud last third calculation
+curl -s https://mawaqit.rahmanr.com/night
+
+# White days (13th, 14th, 15th) & Day 1 moonsighting verification
+curl -s https://mawaqit.rahmanr.com/white-days
+
+# Hijri to Gregorian date converter
+curl -s https://mawaqit.rahmanr.com/convert
+curl -s https://mawaqit.rahmanr.com/convert/1448-05-13
+
+# Location override via subpath
+curl -s https://mawaqit.rahmanr.com/makkah
+curl -s https://mawaqit.rahmanr.com/london
+curl -s https://mawaqit.rahmanr.com/tokyo
+```
 
 ---
 
@@ -18,80 +63,103 @@ mawaqit (Root Application / Collection)
  ├── taqwim       -> Islamic lunar calendar & month-indexed ledger (struct Taqwim)
  ├── munasabat    -> Non-prayer stations, night thirds, fasting, & prohibited times
  ├── bayan        -> Template token interpolation engine (struct Bayan)
- └── theme        -> Terminal formatting styles (enum ThemeStyle)
+ ├── theme        -> Terminal formatting styles (enum ThemeStyle)
+ └── edge         -> Edge renderer & WebAssembly C-ABI layer (worker/src/lib.rs)
 ```
 
 ---
 
-## Quick Start & Basic Usage
+## Local CLI Quick Start & Features
 
-### 1. Default Single-Line Output (for tmux / status bars / polybar)
+### 1. Default Single-Line Output (for tmux / Waybar / Polybar)
 ```bash
-cargo run
+mawaqit
 # Singapore: Dhuhr 12:56 -> Asr 16:04 (-01:12:45) | ◔ 37% | Sunday, 21 Rabi' al-Thani 1448 AH
 ```
 
-### 2. Verbose Table View
+### 2. Verbose Table View (`-v`)
 ```bash
-cargo run -- -v
+mawaqit -v
 ```
+Displays a complete multi-section ASCII dashboard with:
+* Real-time prayer milestones with active/passed/upcoming state indicators.
+* Solar elevations, dawn/dusk twilight angles, and compass azimuth directions.
+* Moon phase glyph, percentage illumination, and lunar cycle name.
+* Active Hijri calendar date and month ledger offsets.
 
-### 3. Custom Format String (`-f` / `--format`)
+### 3. Custom Format Templating (`-f` / `--format`)
+Compose custom one-liners for your shell prompt or window manager:
 ```bash
-cargo run -- -f "%location: %next in %remaining | %moon %moon_pct | Fajr: %fajr, Maghrib: %maghrib"
+mawaqit -f "%location: %next in %remaining | %moon %moon_pct | Fajr: %fajr, Maghrib: %maghrib"
 # Singapore: Asr in 01:12:45 | ◔ 37% | Fajr: 05:35, Maghrib: 18:57
 ```
 
 ### 4. Fasting Schedule & Live State Machine (`--fasting` / `--suhoor` / `--imsak`)
 ```bash
-cargo run -- --fasting
-# Displays Imsak (with configurable buffer), Suhoor cutoff (Fajr), Iftar (Maghrib),
-# total fasting duration, night eating window, and live state (Suhoor permitted / Imsak warning / Fasting active).
+mawaqit --fasting
 ```
+Calculates:
+* Precautionary Imsak (configurable buffer, default: 10 mins).
+* Suhoor cutoff (Fajr time).
+* Fast-breaking / Iftar (Maghrib time).
+* Total fasting span and night eating window.
+* Live state machine: *Suhoor permitted*, *Imsak precautionary cutoff*, or *Fasting active*.
 
 ### 5. Multi-City Fasting Comparison (`--compare-fasting`)
 Compare fasting duration across different latitudes and regional calculation methods:
 ```bash
-cargo run -- --compare-fasting "London,Tokyo,Makkah,Oslo"
+mawaqit --compare-fasting "London,Tokyo,Makkah,Oslo"
 ```
 
-### 6. Night Divisions & Last Third Breakdown (`--night`)
+### 6. Night Divisions & Tahajjud Last Third (`--night`)
 ```bash
-cargo run -- --night
-# Breaks down 1st Third, 2nd Third, Midnight (Nisf), and Last Third (Thuluth al-Akhir / Tahajjud).
+mawaqit --night
 ```
+Breaks down the night into canonical intervals:
+* **First Third**: Early evening window.
+* **Second Third**: Mid-night window.
+* **Midnight (*Nisf al-Layl*)**: Juristic midnight calculation (sunset to Fajr or sunset to sunrise).
+* **Last Third (*Thuluth al-Akhir*)**: The designated window for Tahajjud and Qiyam al-Layl.
 
-### 7. White Days (*Ayyam al-Bid*) & Local Moonsighting Verification (`--white-days`)
+### 7. White Days (*Ayyam al-Bid*) & Moonsighting Check (`--white-days`)
 ```bash
-cargo run -- --white-days
-# Shows Day 1 of the month (for moonsighting verification), active offset, and Gregorian dates of the 13th, 14th, and 15th.
+mawaqit --white-days
 ```
+Shows:
+* Day 1 of the active Hijri month (for moonsighting audit and verification).
+* Active month ledger offset.
+* Exact Gregorian dates for the 13th, 14th, and 15th of the month.
 
 ### 8. Hijri to Gregorian Date Converter (`--convert-hijri`)
-Converts any Hijri day/month into its exact Gregorian date taking into account all active month ledger offsets:
+Converts any Hijri day or specific month into its corresponding Gregorian date while applying all active month ledger overrides:
 ```bash
-cargo run -- --convert-hijri 13               # 13th of current month
-cargo run -- --convert-hijri 1448-05-13        # 13th Jumada al-Ula 1448 AH
+mawaqit --convert-hijri 13               # 13th of current month
+mawaqit --convert-hijri 1448-05-13        # 13th Jumada al-Ula 1448 AH
 ```
 
 ### 9. Prohibited Prayer Times & Duha Window (`--prohibited` / `--duha`)
 ```bash
-cargo run -- --prohibited
-# Tracks the 3 forbidden times (Sunrise, Solar Zenith, Sunset) and forenoon Duha window.
+mawaqit --prohibited
 ```
+Tracks the 3 forbidden times (*Awqat al-Nahy*) where voluntary prayers are prohibited:
+1. **Sunrise (*Tulu' al-Shams*)**: From sunrise until the sun rises a spear's height (~15 mins).
+2. **Solar Zenith (*Zawal*)**: Pre-Dhuhr solar zenith window (~10 mins before Dhuhr).
+3. **Sunset (*Ghurub al-Shams*)**: When the sun turns amber until complete sunset.
+Also displays the permissible **Duha / Ishraq** window.
 
 ### 10. Major Annual Islamic Sacred Stations (`--observances`)
 ```bash
-cargo run -- --observances
-# Displays canonical stations: Tasu'a, 'Ashura, Mid-Sha'ban, Ramadan, Laylat al-Qadr, Eid al-Fitr, 'Arafah, Eid al-Adha, Tashriq.
+mawaqit --observances
 ```
+Displays canonical annual stations including Tasu'a, 'Ashura, Mid-Sha'ban, Ramadan, Laylat al-Qadr, Eid al-Fitr, Day of 'Arafah, Eid al-Adha, and Days of Tashriq.
 
 ### 11. Per-Month Islamic Calendar Ledger Override (`--taqwim-adjust`)
+Handle local moonsighting variations cleanly without modifying calculation source code:
 ```bash
-cargo run -- --taqwim-adjust +1               # Adjust current month by +1 day
-cargo run -- --taqwim-adjust -1 --taqwim-month 1448-05  # Adjust specific month
-# Automatically appends audit record to taqwim_adjustments.log and updates config.toml
+mawaqit --taqwim-adjust +1                              # Adjust current month by +1 day
+mawaqit --taqwim-adjust -1 --taqwim-month 1448-05         # Adjust specific month
 ```
+Automatically appends an audit entry to `taqwim_adjustments.log` and updates `config.toml`.
 
 ---
 
@@ -203,7 +271,24 @@ default_offset = 0
 "1448-04" = 0
 ```
 
-Each adjustment is logged with a human-readable audit trail in `taqwim_adjustments.log`:
+Each adjustment is logged with an audit trail in `taqwim_adjustments.log`:
 ```text
 2026-10-04 14:10:00 | Month: 1448-03 | Offset: +1 | Reason: User CLI adjustment
 ```
+
+---
+
+## Testing
+
+Run the automated test suite locally:
+```bash
+cargo test
+```
+All unit tests verify:
+* Solar elevation & astronomical ephemeris boundary conditions.
+* Moon illumination percentage bounds.
+* Prayer sequence progression and post-Isha / pre-Fajr boundaries.
+* Month-specific Taqwim ledger overrides.
+* Prohibited times (*Awqat al-Nahy*) and Duha calculations.
+* Fasting and Suhoor state transitions.
+
