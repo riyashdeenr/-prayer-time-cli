@@ -85,5 +85,55 @@ When a web browser (Chrome, Safari, Edge, Firefox) visits `https://mawaqit.rahma
 
 ---
 
-## 📌 Decision Status
-Awaiting selection between **Option 1**, **Option 2**, **Option 3**, or **Option 4** before implementing the browser rendering pipeline.
+## 🏆 Selected Architecture: Option 5 — The Interactive Web TUI Simulator
+*(Modeled after the terminal aesthetic of `bio.rahmanr.com`)*
+
+### Design Philosophy
+- **Aesthetic**: Pitch Black (`#000000`), Zinc 950 (`#09090b`), Dark Border (`rgba(255,255,255,0.08)` / `border-zinc-800`), Amber Gold accents (`#f59e0b`), and Emerald Green indicators (`#10b981`).
+- **Terminal Chrome**: Traffic light window controls (🔴 🟡 🟢), title bar `mawaqit - universal terminal prayer engine`, and active pulse badge (`ONLINE`).
+- **Interactive Shell**:
+  - Live command input with `$ ` prompt.
+  - Auto-scrollable terminal output buffer (`overflow-y-auto`).
+  - **Tab auto-completion** (`help`, `London`, `fasting`, `night`, `white-days`, `prohibited`, `observances`, `clear`).
+  - **`↑ / ↓` Command history navigation**.
+  - One-click shortcut pills for rapid execution (`[help]`, `[fasting]`, `[night]`, `[white-days]`, `[London]`, `[Makkah]`).
+  - **Dynamic "Copy curl Command" pill** that automatically generates the exact curl command corresponding to the user's active query.
+
+### Functional Boundary: What is Included vs Excluded
+
+| Capability | In Web TUI Simulator? | Rationale |
+| :--- | :---: | :--- |
+| **City Lookup (`London`, `Tokyo`, `Makkah`)** | ✅ YES | Pure Wasm lookup, instant response. |
+| **Coordinates Lookup (`1.35,103.82`)** | ✅ YES | Evaluated directly by Wasm engine. |
+| **Fasting & Imsak (`fasting`, `suhoor`)** | ✅ YES | Full schedule calculated live. |
+| **Night Thirds & Tahajjud (`night`)** | ✅ YES | Midnight & last third calculation. |
+| **White Days (`white-days`)** | ✅ YES | 13-15 Ayyam al-Bid dates. |
+| **Prohibited Times & Duha (`prohibited`)** | ✅ YES | Awqat al-Nahy + Duha window. |
+| **Observances (`observances`)** | ✅ YES | Canonical sacred annual events. |
+| **Method / Madhab switches (`method ...`)** | ✅ YES | Regional calculation configuration. |
+| **Custom Format Playground (`format ...`)** | ✅ YES | Instant status-bar format tester. |
+| **Persistent Config File (`--save`)** | ❌ NO | Cloudflare Workers is stateless. Explains: *"Config saving is a local CLI feature. Run 'mawaqit --save' on your machine."* |
+| **1-Second Loop / Progress Bar** | ❌ NO | Reserved for Phase 5 (`ratatui`). Web TUI is a request/response shell to avoid websocket spam. |
+
+---
+
+## 🛡️ Zero-Regression Impact Assessment
+
+| File | Status | Regression Risk |
+| :--- | :---: | :--- |
+| `src/main.rs` | **Untouched** | 0% (Local offline CLI remains identical) |
+| `src/lib.rs` | **Untouched** | 0% (Core library remains identical) |
+| `tests/core_tests.rs` | **Untouched** | 0% (All 12 unit/integration tests passing) |
+| `src/edge.rs` | **Untouched** | 0% (Existing Wasm engine handles queries) |
+| `worker/src/lib.rs` | **Untouched** | 0% (FFI exports remain unchanged) |
+| `worker/worker.js` | **Modified** | 0% (Only affects browser HTML responses; terminal curl bypasses HTML completely) |
+
+---
+
+## 🚀 Execution Checklist for Next Session
+1. [ ] Update `worker/worker.js` to render the `bio.rahmanr.com`-style interactive TUI simulator.
+2. [ ] Embed the lightweight JavaScript shell (Tab completion, history buffer, fetch bridge to `mawaqit_worker.wasm`).
+3. [ ] Test in desktop and mobile browsers.
+4. [ ] Run `cargo test` and local `mawaqit --verbose` to confirm zero regressions.
+5. [ ] Commit and push to deploy live.
+
