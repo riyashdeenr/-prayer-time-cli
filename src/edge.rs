@@ -73,11 +73,8 @@ pub fn render_edge_response(params: &EdgeRenderParams, utc_timestamp: i64) -> St
     };
 
     let muwaqqit = Muwaqqit::new(tawqit.clone());
-    let mawaqit = match muwaqqit.calculate(now_for_calculation) {
-        Ok(mut m) => {
-            m.date = local_naive.date();
-            m
-        },
+    let mawaqit = match muwaqqit.calculate_for_date(now_for_calculation, local_naive.date()) {
+        Ok(m) => m,
         Err(e) => return format!("Error calculating prayer times: {}\n", e),
     };
 

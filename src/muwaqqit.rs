@@ -28,7 +28,11 @@ impl Muwaqqit {
 
     /// Calculate the full prayer schedule for a given point in time
     pub fn calculate(&self, now: DateTime<Local>) -> Result<MawaqitDaily, String> {
-        let date = now.date_naive();
+        self.calculate_for_date(now, now.date_naive())
+    }
+
+    /// Calculate the prayer schedule for a specific civil date, evaluated at `now`
+    pub fn calculate_for_date(&self, now: DateTime<Local>, date: chrono::NaiveDate) -> Result<MawaqitDaily, String> {
         let salah_params = self.tawqit.to_salah_params();
 
         let schedule = PrayerSchedule::new()

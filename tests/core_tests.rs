@@ -60,6 +60,67 @@ fn test_muwaqqit_pre_fajr_boundary() {
 }
 
 #[test]
+fn test_edge_early_morning_singapore_before_fajr() {
+    // 05:30 AM SGT (UTC+8) on 2026-10-08 corresponds to 2026-10-07 21:30:00 UTC.
+    // At 05:30 AM in Singapore, Fajr is at ~05:43 AM SGT (21:43 UTC).
+    // Therefore, at 05:30 AM SGT it is Qiyam / Night, and next prayer is Fajr (NOT Isha).
+    let params = prayer_time_cli::EdgeRenderParams {
+        location_name: "Singapore".to_string(),
+        latitude: 1.3521,
+        longitude: 103.8198,
+        timezone_offset_hours: 8,
+        method: Method::Singapore,
+        madhab: Madhab::Shafi,
+        custom_fajr_angle: None,
+        custom_isha_angle: None,
+        format_template: None,
+        subroute: prayer_time_cli::EdgeSubroute::DefaultTable,
+        is_terminal: true,
+    };
+
+    // 2026-10-07 21:30:00 UTC = 1791408600
+    // Verify timestamp:
+    let utc_dt = chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+        chrono::NaiveDate::from_ymd_opt(2026, 10, 7).unwrap().and_hms_opt(21, 30, 0).unwrap(),
+        chrono::Utc,
+    );
+    let output = prayer_time_cli::render_edge_response(&params, utc_dt.timestamp());
+
+    // It should NOT show Isha as current or Next: Tomorrow
+    assert!(output.contains("Date: 2026-10-08"), "Date should be the local civil date 2026-10-08");
+    assert!(output.contains("Next: Fajr"), "Next prayer at 05:30 SGT should be Fajr");
+}
+
+#[test]
+fn test_edge_morning_fajr_active_singapore() {
+    // 06:00 AM SGT on 2026-10-08 = 2026-10-07 22:00:00 UTC.
+    // Fajr is ~05:43 AM, Sunrise is ~06:54 AM.
+    // At 06:00 AM, Fajr is currently active and next is Sunrise.
+    let params = prayer_time_cli::EdgeRenderParams {
+        location_name: "Singapore".to_string(),
+        latitude: 1.3521,
+        longitude: 103.8198,
+        timezone_offset_hours: 8,
+        method: Method::Singapore,
+        madhab: Madhab::Shafi,
+        custom_fajr_angle: None,
+        custom_isha_angle: None,
+        format_template: None,
+        subroute: prayer_time_cli::EdgeSubroute::DefaultTable,
+        is_terminal: true,
+    };
+
+    let utc_dt = chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+        chrono::NaiveDate::from_ymd_opt(2026, 10, 7).unwrap().and_hms_opt(22, 0, 0).unwrap(),
+        chrono::Utc,
+    );
+    let output = prayer_time_cli::render_edge_response(&params, utc_dt.timestamp());
+
+    assert!(output.contains("Date: 2026-10-08"), "Date should be local date 2026-10-08");
+    assert!(output.contains("Next: Sunrise"), "Next prayer at 06:00 SGT should be Sunrise");
+}
+
+#[test]
 fn test_muwaqqit_post_isha_boundary() {
     // 22:30 PM is after Isha (~20:06 PM in Singapore)
     let tawqit = Tawqit::singapore();
